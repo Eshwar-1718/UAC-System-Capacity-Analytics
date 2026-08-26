@@ -30,14 +30,8 @@ st.markdown(
         background-color: #f7f9fc;
     }
 
-    #MainMenu {
-        visibility: hidden;
-    }
-
-    footer {
-        visibility: hidden;
-    }
-
+    #MainMenu,
+    footer,
     header {
         visibility: hidden;
     }
@@ -47,8 +41,6 @@ st.markdown(
         padding-bottom: 2rem;
         max-width: 1450px;
     }
-
-    /* SECTION HEADERS */
 
     .section-title {
         font-size: 1.55rem;
@@ -63,51 +55,6 @@ st.markdown(
         margin-bottom: 1rem;
     }
 
-    /* KPI CARDS */
-
-    .metric-card {
-        background: white;
-        padding: 1.2rem;
-        border-radius: 14px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.06);
-        min-height: 150px;
-        margin-bottom: 0.5rem;
-    }
-
-    .metric-label {
-        color: #64748b;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-
-    .metric-value {
-        color: #102a43;
-        font-size: 2rem;
-        font-weight: 700;
-        margin-top: 0.5rem;
-    }
-
-    .metric-description {
-        color: #94a3b8;
-        font-size: 0.75rem;
-        margin-top: 0.4rem;
-        line-height: 1.4;
-    }
-
-    /* INSIGHT CARDS */
-
-    .insight-card {
-        background: white;
-        padding: 1.2rem;
-        border-radius: 12px;
-        border-left: 5px solid #1f77b4;
-        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.05);
-        margin-bottom: 0.8rem;
-    }
-
-    /* FOOTER */
-
     .footer-box {
         background: #102a43;
         color: white;
@@ -115,6 +62,14 @@ st.markdown(
         border-radius: 14px;
         text-align: center;
         margin-top: 3rem;
+    }
+
+    [data-testid="stMetric"] {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 1rem;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.06);
     }
 
     </style>
@@ -135,14 +90,11 @@ ROOT = Path(__file__).resolve().parent
 # ============================================================
 
 def find_file(possible_paths):
-    """
-    Return the first existing file from a list of possible paths.
-    This supports files placed either in folders or directly
-    in the project root.
-    """
 
     for path in possible_paths:
+
         if path.exists():
+
             return path
 
     return None
@@ -172,11 +124,13 @@ FORECAST_PATH = find_file(
 def load_data(data_path, forecast_path):
 
     if data_path is None:
+
         raise FileNotFoundError(
             "processed_uac_daily.csv was not found."
         )
 
     if forecast_path is None:
+
         raise FileNotFoundError(
             "hhs_care_30_day_forecast.csv was not found."
         )
@@ -191,16 +145,16 @@ def load_data(data_path, forecast_path):
         parse_dates=["Date"]
     )
 
-    df = df.sort_values(
-        "Date"
-    ).reset_index(
-        drop=True
+    df = (
+        df
+        .sort_values("Date")
+        .reset_index(drop=True)
     )
 
-    forecast = forecast.sort_values(
-        "Date"
-    ).reset_index(
-        drop=True
+    forecast = (
+        forecast
+        .sort_values("Date")
+        .reset_index(drop=True)
     )
 
     return df, forecast
@@ -225,12 +179,41 @@ except Exception as error:
 
     st.info(
         """
-        Make sure these files exist in the GitHub repository:
+Required files:
 
-        processed_uac_daily.csv
-
-        hhs_care_30_day_forecast.csv
+- processed_uac_daily.csv
+- hhs_care_30_day_forecast.csv
         """
+    )
+
+    st.stop()
+
+
+# ============================================================
+# VALIDATE REQUIRED COLUMNS
+# ============================================================
+
+required_columns = [
+    "Date",
+    "CBP_Custody",
+    "CBP_Transferred",
+    "HHS_Care",
+    "HHS_Discharged"
+]
+
+
+missing_columns = [
+    column
+    for column in required_columns
+    if column not in df.columns
+]
+
+
+if missing_columns:
+
+    st.error(
+        "Missing required columns: "
+        + ", ".join(missing_columns)
     )
 
     st.stop()
@@ -240,127 +223,141 @@ except Exception as error:
 # DATA PREPARATION
 # ============================================================
 
-if "Total_System_Load" not in df.columns:
+def prepare_metrics(data):
 
-    df["Total_System_Load"] = (
-        df["CBP_Custody"]
-        +
-        df["HHS_Care"]
-    )
+    data = data.copy()
 
 
-if "Net_Daily_Intake" not in df.columns:
+    if "Total_System_Load" not in data.columns:
 
-    df["Net_Daily_Intake"] = (
-        df["CBP_Transferred"]
-        -
-        df["HHS_Discharged"]
-    )
-
-
-if "System_Load_7D_MA" not in df.columns:
-
-    df["System_Load_7D_MA"] = (
-        df["Total_System_Load"]
-        .rolling(
-            7,
-            min_periods=1
+        data["Total_System_Load"] = (
+            data["CBP_Custody"]
+            +
+            data["HHS_Care"]
         )
-        .mean()
-    )
 
 
-if "System_Load_14D_MA" not in df.columns:
+    if "Net_Daily_Intake" not in data.columns:
 
-    df["System_Load_14D_MA"] = (
-        df["Total_System_Load"]
-        .rolling(
-            14,
-            min_periods=1
+        data["Net_Daily_Intake"] = (
+            data["CBP_Transferred"]
+            -
+            data["HHS_Discharged"]
         )
-        .mean()
-    )
 
 
-if "Care_Load_Growth_Rate" not in df.columns:
+    if "System_Load_7D_MA" not in data.columns:
 
-    df["Care_Load_Growth_Rate"] = (
-        df["Total_System_Load"]
-        .pct_change()
-        * 100
-    )
-
-
-if "Backlog_Accumulation" not in df.columns:
-
-    df["Backlog_Accumulation"] = (
-        df["Net_Daily_Intake"]
-        .clip(lower=0)
-        .cumsum()
-    )
-
-
-if "Backlog_Accumulation_Rate" not in df.columns:
-
-    df["Backlog_Accumulation_Rate"] = (
-        df["Net_Daily_Intake"]
-        .clip(lower=0)
-        .rolling(
-            7,
-            min_periods=1
+        data["System_Load_7D_MA"] = (
+            data["Total_System_Load"]
+            .rolling(
+                7,
+                min_periods=1
+            )
+            .mean()
         )
-        .mean()
-    )
 
 
-if "Care_Load_Volatility_Index" not in df.columns:
+    if "System_Load_14D_MA" not in data.columns:
 
-    daily_change = (
-        df["Total_System_Load"]
-        .pct_change()
-        * 100
-    )
-
-    df["Care_Load_Volatility_Index"] = (
-        daily_change
-        .rolling(
-            7,
-            min_periods=2
+        data["System_Load_14D_MA"] = (
+            data["Total_System_Load"]
+            .rolling(
+                14,
+                min_periods=1
+            )
+            .mean()
         )
-        .std()
-    )
 
 
-if "Discharge_Offset_Ratio" not in df.columns:
+    if "Care_Load_Growth_Rate" not in data.columns:
 
-    df["Discharge_Offset_Ratio"] = np.where(
-        df["CBP_Transferred"] > 0,
-        (
-            df["HHS_Discharged"]
-            /
-            df["CBP_Transferred"]
+        data["Care_Load_Growth_Rate"] = (
+            data["Total_System_Load"]
+            .pct_change()
+            *
+            100
         )
-        * 100,
-        np.nan
-    )
 
 
-if "Flag_Transfer_GT_CBP_Custody" not in df.columns:
+    if "Backlog_Accumulation" not in data.columns:
 
-    df["Flag_Transfer_GT_CBP_Custody"] = (
-        df["CBP_Transferred"]
-        >
-        df["CBP_Custody"]
-    )
+        data["Backlog_Accumulation"] = (
+            data["Net_Daily_Intake"]
+            .clip(lower=0)
+            .cumsum()
+        )
 
 
-if "Flag_Discharge_GT_HHS_Care" not in df.columns:
+    if "Backlog_Accumulation_Rate" not in data.columns:
 
-    df["Flag_Discharge_GT_HHS_Care"] = (
-        df["HHS_Discharged"]
-        >
-        df["HHS_Care"]
-    )
+        data["Backlog_Accumulation_Rate"] = (
+            data["Net_Daily_Intake"]
+            .clip(lower=0)
+            .rolling(
+                7,
+                min_periods=1
+            )
+            .mean()
+        )
+
+
+    if "Care_Load_Volatility_Index" not in data.columns:
+
+        daily_change = (
+            data["Total_System_Load"]
+            .pct_change()
+            *
+            100
+        )
+
+        data["Care_Load_Volatility_Index"] = (
+            daily_change
+            .rolling(
+                7,
+                min_periods=2
+            )
+            .std()
+        )
+
+
+    if "Discharge_Offset_Ratio" not in data.columns:
+
+        data["Discharge_Offset_Ratio"] = np.where(
+            data["CBP_Transferred"] > 0,
+            (
+                data["HHS_Discharged"]
+                /
+                data["CBP_Transferred"]
+            )
+            *
+            100,
+            np.nan
+        )
+
+
+    if "Flag_Transfer_GT_CBP_Custody" not in data.columns:
+
+        data["Flag_Transfer_GT_CBP_Custody"] = (
+            data["CBP_Transferred"]
+            >
+            data["CBP_Custody"]
+        )
+
+
+    if "Flag_Discharge_GT_HHS_Care" not in data.columns:
+
+        data["Flag_Discharge_GT_HHS_Care"] = (
+            data["HHS_Discharged"]
+            >
+            data["HHS_Care"]
+        )
+
+
+    return data
+
+
+df = prepare_metrics(df)
 
 
 # ============================================================
@@ -377,6 +374,7 @@ with st.sidebar:
 
     st.divider()
 
+
     page = st.radio(
         "Navigation",
         [
@@ -388,15 +386,28 @@ with st.sidebar:
         ]
     )
 
+
     st.divider()
+
 
     st.subheader(
         "Filters"
     )
 
-    min_date = df["Date"].min().date()
 
-    max_date = df["Date"].max().date()
+    min_date = (
+        df["Date"]
+        .min()
+        .date()
+    )
+
+
+    max_date = (
+        df["Date"]
+        .max()
+        .date()
+    )
+
 
     date_range = st.date_input(
         "Analysis Period",
@@ -408,7 +419,9 @@ with st.sidebar:
         max_value=max_date
     )
 
+
     st.divider()
+
 
     granularity = st.selectbox(
         "Time Granularity",
@@ -419,7 +432,9 @@ with st.sidebar:
         ]
     )
 
+
     st.divider()
+
 
     st.caption(
         "Decision-support analytics for monitoring "
@@ -431,10 +446,14 @@ with st.sidebar:
 # FILTER DATA
 # ============================================================
 
-if isinstance(
-    date_range,
-    (tuple, list)
-) and len(date_range) == 2:
+if (
+    isinstance(
+        date_range,
+        (tuple, list)
+    )
+    and
+    len(date_range) == 2
+):
 
     start_date = date_range[0]
 
@@ -442,9 +461,9 @@ if isinstance(
 
 else:
 
-    start_date = min_date
+    start_date = date_range
 
-    end_date = max_date
+    end_date = date_range
 
 
 filtered_df = df[
@@ -480,41 +499,43 @@ def aggregate_data(
     level
 ):
 
+    if level == "Daily":
+
+        return data.copy()
+
+
     numeric_columns = (
-        data.select_dtypes(
+        data
+        .select_dtypes(
             include=np.number
         )
         .columns
         .tolist()
     )
 
-    if level == "Daily":
 
-        return data.copy()
-
-    temp = data.copy()
-
-    temp = temp.set_index(
-        "Date"
+    temp = (
+        data
+        .set_index("Date")
     )
+
 
     if level == "Weekly":
 
-        result = (
-            temp[numeric_columns]
-            .resample("W")
-            .mean()
-            .reset_index()
-        )
+        frequency = "W"
 
     else:
 
-        result = (
-            temp[numeric_columns]
-            .resample("ME")
-            .mean()
-            .reset_index()
-        )
+        frequency = "ME"
+
+
+    result = (
+        temp[numeric_columns]
+        .resample(frequency)
+        .mean()
+        .reset_index()
+    )
+
 
     return result
 
@@ -529,7 +550,10 @@ display_df = aggregate_data(
 # COMMON CALCULATIONS
 # ============================================================
 
-latest = filtered_df.iloc[-1]
+latest = (
+    filtered_df
+    .iloc[-1]
+)
 
 
 peak_row = filtered_df.loc[
@@ -560,9 +584,7 @@ latest_growth = (
 )
 
 
-if pd.isna(
-    latest_growth
-):
+if pd.isna(latest_growth):
 
     latest_growth = 0
 
@@ -574,9 +596,7 @@ latest_volatility = (
 )
 
 
-if pd.isna(
-    latest_volatility
-):
+if pd.isna(latest_volatility):
 
     latest_volatility = 0
 
@@ -588,9 +608,7 @@ latest_backlog_rate = (
 )
 
 
-if pd.isna(
-    latest_backlog_rate
-):
+if pd.isna(latest_backlog_rate):
 
     latest_backlog_rate = 0
 
@@ -657,9 +675,7 @@ max_volatility = (
 
 
 if (
-    pd.notna(
-        max_volatility
-    )
+    pd.notna(max_volatility)
     and
     max_volatility > 0
 ):
@@ -692,10 +708,6 @@ pressure_score = round(
 )
 
 
-# ============================================================
-# PRESSURE CLASSIFICATION
-# ============================================================
-
 if pressure_score < 35:
 
     pressure_status = "LOW"
@@ -713,18 +725,18 @@ else:
 # STRAIN ANALYSIS
 # ============================================================
 
-strain_df = filtered_df.copy()
-
-
 def calculate_pressure_scores(
     data
 ):
 
     result = data.copy()
 
-    max_load = result[
-        "Total_System_Load"
-    ].max()
+
+    max_load = (
+        result[
+            "Total_System_Load"
+        ].max()
+    )
 
 
     max_net = (
@@ -738,9 +750,11 @@ def calculate_pressure_scores(
     )
 
 
-    max_vol = result[
-        "Care_Load_Volatility_Index"
-    ].max()
+    max_vol = (
+        result[
+            "Care_Load_Volatility_Index"
+        ].max()
+    )
 
 
     if max_load > 0:
@@ -765,9 +779,7 @@ def calculate_pressure_scores(
 
 
     if (
-        pd.notna(
-            max_net
-        )
+        pd.notna(max_net)
         and
         max_net > 0
     ):
@@ -795,9 +807,7 @@ def calculate_pressure_scores(
 
 
     if (
-        pd.notna(
-            max_vol
-        )
+        pd.notna(max_vol)
         and
         max_vol > 0
     ):
@@ -808,9 +818,7 @@ def calculate_pressure_scores(
             result[
                 "Care_Load_Volatility_Index"
             ]
-            .fillna(
-                0
-            )
+            .fillna(0)
             /
             max_vol
             *
@@ -829,15 +837,21 @@ def calculate_pressure_scores(
     ] = (
         result[
             "Load_Score"
-        ] * 0.50
+        ]
+        *
+        0.50
         +
         result[
             "Net_Intake_Score"
-        ] * 0.30
+        ]
+        *
+        0.30
         +
         result[
             "Volatility_Score"
-        ] * 0.20
+        ]
+        *
+        0.20
     )
 
 
@@ -845,7 +859,7 @@ def calculate_pressure_scores(
 
 
 strain_df = calculate_pressure_scores(
-    strain_df
+    filtered_df
 )
 
 
@@ -897,9 +911,7 @@ for _, group in strain_df.groupby(
                     ].max(),
 
                 "Duration (Days)":
-                    len(
-                        group
-                    ),
+                    len(group),
 
                 "Peak Pressure":
                     round(
@@ -926,17 +938,11 @@ def section_header(
     subtitle
 ):
 
-    html = (
-        '<div class="section-title">'
-        + str(title)
-        + '</div>'
-        '<div class="section-subtitle">'
-        + str(subtitle)
-        + '</div>'
-    )
-
     st.markdown(
-        html,
+        f"""
+        <div class="section-title">{title}</div>
+        <div class="section-subtitle">{subtitle}</div>
+        """,
         unsafe_allow_html=True
     )
 
@@ -947,27 +953,19 @@ def metric_card(
     description
 ):
 
-    # Important:
-    # The HTML is kept as one continuous string so Streamlit
-    # renders the tags instead of displaying them as text.
+    # FIX:
+    # Use Streamlit's native metric component instead of
+    # custom HTML. This prevents HTML code from appearing
+    # as text in the deployed application.
 
-    html = (
-        '<div class="metric-card">'
-        '<div class="metric-label">'
-        + str(title)
-        + '</div>'
-        '<div class="metric-value">'
-        + str(value)
-        + '</div>'
-        '<div class="metric-description">'
-        + str(description)
-        + '</div>'
-        '</div>'
+    st.metric(
+        label=title,
+        value=value,
+        help=description
     )
 
-    st.markdown(
-        html,
-        unsafe_allow_html=True
+    st.caption(
+        description
     )
 
 
@@ -1024,10 +1022,7 @@ if page == "🏠 Executive Overview":
         )
 
 
-    st.markdown(
-        "<br>",
-        unsafe_allow_html=True
-    )
+    st.write("")
 
 
     row2_col1, row2_col2, row2_col3 = (
@@ -1062,12 +1057,6 @@ if page == "🏠 Executive Overview":
         )
 
 
-    st.markdown(
-        "<br>",
-        unsafe_allow_html=True
-    )
-
-
     section_header(
         "Operational Pressure Assessment",
         "Composite risk indicator based on current load, intake pressure and volatility."
@@ -1087,7 +1076,8 @@ if page == "🏠 Executive Overview":
                 value=pressure_score,
 
                 number={
-                    "suffix": " / 100"
+                    "suffix":
+                        " / 100"
                 },
 
                 title={
@@ -1142,28 +1132,21 @@ if page == "🏠 Executive Overview":
 
     with right:
 
-        assessment_html = (
-            '<div class="insight-card">'
-            '<b>Current System Assessment</b>'
-            '<br><br>'
-            'The current composite pressure score is '
-            '<b>'
-            + str(pressure_score)
-            + '/100</b>, classified as '
-            '<b>'
-            + str(pressure_status)
-            + '</b>.'
-            '<br><br>'
-            'The indicator combines active care-system load, '
-            'positive intake pressure and recent volatility '
-            'to provide an operational early-warning signal.'
-            '</div>'
+        st.subheader(
+            "Current System Assessment"
         )
 
 
-        st.markdown(
-            assessment_html,
-            unsafe_allow_html=True
+        st.info(
+            f"""
+The current composite pressure score is
+**{pressure_score}/100**, classified as
+**{pressure_status}**.
+
+The indicator combines active care-system load,
+positive intake pressure and recent volatility
+to provide an operational early-warning signal.
+"""
         )
 
 
@@ -1182,18 +1165,13 @@ if page == "🏠 Executive Overview":
             )
 
 
-        insight_html = (
-            '<div class="insight-card">'
-            '<b>Automated Insight</b>'
-            '<br><br>'
-            + insight
-            + '</div>'
+        st.subheader(
+            "Automated Insight"
         )
 
 
-        st.markdown(
-            insight_html,
-            unsafe_allow_html=True
+        st.success(
+            insight
         )
 
 
@@ -1246,13 +1224,9 @@ if page == "🏠 Executive Overview":
             display_df,
             x="Date",
             y=selected_columns,
-
             labels={
-                "value":
-                    "Children",
-
-                "variable":
-                    "Metric"
+                "value": "Children",
+                "variable": "Metric"
             }
         )
 
@@ -1282,9 +1256,7 @@ if page == "🏠 Executive Overview":
     )
 
 
-    col1, col2 = st.columns(
-        2
-    )
+    col1, col2 = st.columns(2)
 
 
     with col1:
@@ -1293,7 +1265,6 @@ if page == "🏠 Executive Overview":
             display_df,
             x="Date",
             y="Care_Load_Growth_Rate",
-
             labels={
                 "Care_Load_Growth_Rate":
                     "Growth Rate (%)"
@@ -1325,7 +1296,6 @@ if page == "🏠 Executive Overview":
             display_df,
             x="Date",
             y="Care_Load_Volatility_Index",
-
             labels={
                 "Care_Load_Volatility_Index":
                     "Volatility Index"
@@ -1351,9 +1321,7 @@ if page == "🏠 Executive Overview":
     )
 
 
-    insight1, insight2, insight3 = st.columns(
-        3
-    )
+    insight1, insight2, insight3 = st.columns(3)
 
 
     with insight1:
@@ -1410,7 +1378,11 @@ This occurred on
 
     with insight3:
 
-        if discharge_offset >= 100:
+        if (
+            pd.notna(discharge_offset)
+            and
+            discharge_offset >= 100
+        ):
 
             discharge_message = (
                 "Discharges are generally offsetting or "
@@ -1449,18 +1421,13 @@ elif page == "📈 System Capacity":
     fig = px.area(
         display_df,
         x="Date",
-
         y=[
             "CBP_Custody",
             "HHS_Care"
         ],
-
         labels={
-            "value":
-                "Children",
-
-            "variable":
-                "Care System"
+            "value": "Children",
+            "variable": "Care System"
         }
     )
 
@@ -1531,6 +1498,11 @@ elif page == "📈 System Capacity":
 
     with col2:
 
+        st.subheader(
+            "Top 10 Highest System Load Dates"
+        )
+
+
         st.dataframe(
             filtered_df[
                 [
@@ -1544,9 +1516,7 @@ elif page == "📈 System Capacity":
                 "Total_System_Load",
                 ascending=False
             )
-            .head(
-                10
-            ),
+            .head(10),
             use_container_width=True
         )
 
@@ -1566,18 +1536,13 @@ elif page == "🔄 Flow & Backlog":
     fig = px.line(
         display_df,
         x="Date",
-
         y=[
             "CBP_Transferred",
             "HHS_Discharged"
         ],
-
         labels={
-            "value":
-                "Children",
-
-            "variable":
-                "Flow"
+            "value": "Children",
+            "variable": "Flow"
         }
     )
 
@@ -1633,18 +1598,13 @@ elif page == "🔄 Flow & Backlog":
     fig = px.line(
         display_df,
         x="Date",
-
         y=[
             "Backlog_Accumulation",
             "Backlog_Accumulation_Rate"
         ],
-
         labels={
-            "value":
-                "Children",
-
-            "variable":
-                "Backlog Metric"
+            "value": "Children",
+            "variable": "Backlog Metric"
         }
     )
 
@@ -1745,48 +1705,35 @@ elif page == "🔮 Forecast & Risk":
     forecast_data = forecast.copy()
 
 
-    if (
-        "Forecast_HHS_Care"
-        in
-        forecast_data.columns
-    ):
+    if "Forecast_HHS_Care" in forecast_data.columns:
 
-        forecast_data = (
-            forecast_data.rename(
-                columns={
-                    "Forecast_HHS_Care":
-                        "Forecast HHS Care"
-                }
-            )
+        forecast_data = forecast_data.rename(
+            columns={
+                "Forecast_HHS_Care":
+                    "Forecast HHS Care"
+            }
+        )
+
+    elif "Forecast" in forecast_data.columns:
+
+        forecast_data = forecast_data.rename(
+            columns={
+                "Forecast":
+                    "Forecast HHS Care"
+            }
         )
 
 
-    elif (
-        "Forecast"
-        in
-        forecast_data.columns
-    ):
-
-        forecast_data = (
-            forecast_data.rename(
-                columns={
-                    "Forecast":
-                        "Forecast HHS Care"
-                }
-            )
+    combined = (
+        pd.merge(
+            observed,
+            forecast_data,
+            on="Date",
+            how="outer"
         )
-
-
-    combined = pd.merge(
-        observed,
-        forecast_data,
-        on="Date",
-        how="outer"
-    )
-
-
-    combined = combined.sort_values(
-        "Date"
+        .sort_values(
+            "Date"
+        )
     )
 
 
@@ -1795,14 +1742,8 @@ elif page == "🔮 Forecast & Risk":
 
     fig.add_trace(
         go.Scatter(
-            x=combined[
-                "Date"
-            ],
-
-            y=combined[
-                "Observed HHS Care"
-            ],
-
+            x=combined["Date"],
+            y=combined["Observed HHS Care"],
             mode="lines",
             name="Observed HHS Care"
         )
@@ -1817,21 +1758,21 @@ elif page == "🔮 Forecast & Risk":
 
         fig.add_trace(
             go.Scatter(
-                x=combined[
-                    "Date"
-                ],
-
-                y=combined[
-                    "Forecast HHS Care"
-                ],
-
+                x=combined["Date"],
+                y=combined["Forecast HHS Care"],
                 mode="lines",
                 name="30-Day Forecast",
-
                 line=dict(
                     dash="dash"
                 )
             )
+        )
+
+    else:
+
+        st.warning(
+            "No recognized forecast column was found. "
+            "Expected Forecast_HHS_Care or Forecast."
         )
 
 
@@ -1849,7 +1790,7 @@ elif page == "🔮 Forecast & Risk":
     )
 
 
-    forecast_change = 0
+    forecast_change = None
 
 
     if (
@@ -1859,7 +1800,8 @@ elif page == "🔮 Forecast & Risk":
     ):
 
         forecast_values = (
-            forecast_data.dropna(
+            forecast_data
+            .dropna(
                 subset=[
                     "Forecast HHS Care"
                 ]
@@ -1891,9 +1833,7 @@ elif page == "🔮 Forecast & Risk":
 
 
             col1, col2, col3 = (
-                st.columns(
-                    3
-                )
+                st.columns(3)
             )
 
 
@@ -1927,16 +1867,17 @@ elif page == "🔮 Forecast & Risk":
     )
 
 
-    if (
-        "Forecast HHS Care"
-        in
-        forecast_data.columns
-    ):
+    if forecast_change is None:
 
-        if forecast_change > 0:
+        st.info(
+            "Forecast risk metrics could not be calculated because "
+            "the forecast file does not contain usable forecast values."
+        )
 
-            st.warning(
-                f"""
+    elif forecast_change > 0:
+
+        st.warning(
+            f"""
 Projected HHS care demand is expected to increase by
 approximately **{forecast_change:,.0f} children** across
 the forecast horizon.
@@ -1944,17 +1885,17 @@ the forecast horizon.
 Operational planners should monitor shelter capacity,
 staffing and sponsor-placement throughput.
 """
-            )
+        )
 
-        else:
+    else:
 
-            st.success(
-                f"""
+        st.success(
+            f"""
 Projected HHS care demand is expected to decline by
 approximately **{abs(forecast_change):,.0f} children**
 across the forecast horizon.
 """
-            )
+        )
 
 
 # ============================================================
@@ -1970,14 +1911,8 @@ elif page == "🔎 Data Quality":
 
 
     expected_dates = pd.date_range(
-        df[
-            "Date"
-        ].min(),
-
-        df[
-            "Date"
-        ].max(),
-
+        df["Date"].min(),
+        df["Date"].max(),
         freq="D"
     )
 
@@ -2016,21 +1951,21 @@ elif page == "🔎 Data Quality":
     transfer_flags = (
         filtered_df[
             "Flag_Transfer_GT_CBP_Custody"
-        ].sum()
+        ]
+        .sum()
     )
 
 
     discharge_flags = (
         filtered_df[
             "Flag_Discharge_GT_HHS_Care"
-        ].sum()
+        ]
+        .sum()
     )
 
 
     col1, col2, col3 = (
-        st.columns(
-            3
-        )
+        st.columns(3)
     )
 
 
@@ -2059,9 +1994,7 @@ elif page == "🔎 Data Quality":
 
 
     col4, col5, col6 = (
-        st.columns(
-            3
-        )
+        st.columns(3)
     )
 
 
@@ -2083,14 +2016,9 @@ elif page == "🔎 Data Quality":
 
     with col6:
 
-        total_records = len(
-            filtered_df
-        )
-
-
         st.metric(
             "Analysis Records",
-            f"{total_records:,}"
+            f"{len(filtered_df):,}"
         )
 
 
@@ -2101,9 +2029,7 @@ elif page == "🔎 Data Quality":
 
 
     if (
-        len(
-            missing_dates
-        ) == 0
+        len(missing_dates) == 0
         and
         duplicate_dates == 0
     ):
@@ -2120,17 +2046,7 @@ elif page == "🔎 Data Quality":
         )
 
 
-    if len(
-        missing_dates
-    ) > 0:
-
-        missing_dates_df = pd.DataFrame(
-            {
-                "Missing Date":
-                    missing_dates
-            }
-        )
-
+    if len(missing_dates) > 0:
 
         st.subheader(
             "Missing Dates"
@@ -2138,7 +2054,12 @@ elif page == "🔎 Data Quality":
 
 
         st.dataframe(
-            missing_dates_df,
+            pd.DataFrame(
+                {
+                    "Missing Date":
+                        missing_dates
+                }
+            ),
             use_container_width=True
         )
 
@@ -2196,7 +2117,8 @@ elif page == "🔎 Data Quality":
 
 
     csv = (
-        filtered_df.to_csv(
+        filtered_df
+        .to_csv(
             index=False
         )
         .encode(
@@ -2217,20 +2139,17 @@ elif page == "🔎 Data Quality":
 # FOOTER
 # ============================================================
 
-footer_html = (
-    '<div class="footer-box">'
-    '<b>UAC Care Intelligence Platform</b>'
-    '<br><br>'
-    'Healthcare Capacity Analytics • '
-    'Flow Monitoring • '
-    'Backlog Analysis • '
-    'Forecasting • '
-    'Decision Support'
-    '</div>'
-)
-
-
 st.markdown(
-    footer_html,
+    """
+    <div class="footer-box">
+        <b>UAC Care Intelligence Platform</b>
+        <br><br>
+        Healthcare Capacity Analytics •
+        Flow Monitoring •
+        Backlog Analysis •
+        Forecasting •
+        Decision Support
+    </div>
+    """,
     unsafe_allow_html=True
 )
