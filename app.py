@@ -22,101 +22,105 @@ st.set_page_config(
 # CUSTOM CSS
 # ============================================================
 
-st.markdown("""
-<style>
+st.markdown(
+    """
+    <style>
 
-.stApp {
-    background-color: #f7f9fc;
-}
+    .stApp {
+        background-color: #f7f9fc;
+    }
 
-#MainMenu {
-    visibility: hidden;
-}
+    #MainMenu {
+        visibility: hidden;
+    }
 
-footer {
-    visibility: hidden;
-}
+    footer {
+        visibility: hidden;
+    }
 
-header {
-    visibility: hidden;
-}
+    header {
+        visibility: hidden;
+    }
 
-.block-container {
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-    max-width: 1450px;
-}
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        max-width: 1450px;
+    }
 
-/* SECTION HEADERS */
+    /* SECTION HEADERS */
 
-.section-title {
-    font-size: 1.55rem;
-    font-weight: 700;
-    color: #102a43;
-    margin-top: 1.6rem;
-    margin-bottom: 0.35rem;
-}
+    .section-title {
+        font-size: 1.55rem;
+        font-weight: 700;
+        color: #102a43;
+        margin-top: 1.6rem;
+        margin-bottom: 0.35rem;
+    }
 
-.section-subtitle {
-    color: #64748b;
-    margin-bottom: 1rem;
-}
+    .section-subtitle {
+        color: #64748b;
+        margin-bottom: 1rem;
+    }
 
-/* KPI CARDS */
+    /* KPI CARDS */
 
-.metric-card {
-    background: white;
-    padding: 1.2rem;
-    border-radius: 14px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 15px rgba(15, 23, 42, 0.06);
-    min-height: 150px;
-}
+    .metric-card {
+        background: white;
+        padding: 1.2rem;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.06);
+        min-height: 150px;
+        margin-bottom: 0.5rem;
+    }
 
-.metric-label {
-    color: #64748b;
-    font-size: 0.85rem;
-    font-weight: 600;
-}
+    .metric-label {
+        color: #64748b;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
 
-.metric-value {
-    color: #102a43;
-    font-size: 2rem;
-    font-weight: 700;
-    margin-top: 0.5rem;
-}
+    .metric-value {
+        color: #102a43;
+        font-size: 2rem;
+        font-weight: 700;
+        margin-top: 0.5rem;
+    }
 
-.metric-description {
-    color: #94a3b8;
-    font-size: 0.75rem;
-    margin-top: 0.4rem;
-    line-height: 1.4;
-}
+    .metric-description {
+        color: #94a3b8;
+        font-size: 0.75rem;
+        margin-top: 0.4rem;
+        line-height: 1.4;
+    }
 
-/* INSIGHT CARDS */
+    /* INSIGHT CARDS */
 
-.insight-card {
-    background: white;
-    padding: 1.2rem;
-    border-radius: 12px;
-    border-left: 5px solid #1f77b4;
-    box-shadow: 0 4px 15px rgba(15, 23, 42, 0.05);
-    margin-bottom: 0.8rem;
-}
+    .insight-card {
+        background: white;
+        padding: 1.2rem;
+        border-radius: 12px;
+        border-left: 5px solid #1f77b4;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.05);
+        margin-bottom: 0.8rem;
+    }
 
-/* FOOTER */
+    /* FOOTER */
 
-.footer-box {
-    background: #102a43;
-    color: white;
-    padding: 1.5rem;
-    border-radius: 14px;
-    text-align: center;
-    margin-top: 3rem;
-}
+    .footer-box {
+        background: #102a43;
+        color: white;
+        padding: 1.5rem;
+        border-radius: 14px;
+        text-align: center;
+        margin-top: 3rem;
+    }
 
-</style>
-""", unsafe_allow_html=True)
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 
 # ============================================================
@@ -126,34 +130,18 @@ header {
 ROOT = Path(__file__).resolve().parent
 
 
-# Supports BOTH structures:
-#
-# Current GitHub structure:
-# ROOT/
-# ├── processed_uac_daily.csv
-# └── hhs_care_30_day_forecast.csv
-#
-# Future organized structure:
-# ROOT/
-# ├── data/processed_uac_daily.csv
-# └── outputs/hhs_care_30_day_forecast.csv
+# ============================================================
+# FIND DATA FILES
+# ============================================================
 
-
-def find_file(filename, subfolder=None):
-
-    possible_paths = []
-
-    if subfolder is not None:
-        possible_paths.append(
-            ROOT / subfolder / filename
-        )
-
-    possible_paths.append(
-        ROOT / filename
-    )
+def find_file(possible_paths):
+    """
+    Return the first existing file from a list of possible paths.
+    This supports files placed either in folders or directly
+    in the project root.
+    """
 
     for path in possible_paths:
-
         if path.exists():
             return path
 
@@ -161,13 +149,18 @@ def find_file(filename, subfolder=None):
 
 
 DATA_PATH = find_file(
-    "processed_uac_daily.csv",
-    "data"
+    [
+        ROOT / "data" / "processed_uac_daily.csv",
+        ROOT / "processed_uac_daily.csv"
+    ]
 )
 
+
 FORECAST_PATH = find_file(
-    "hhs_care_30_day_forecast.csv",
-    "outputs"
+    [
+        ROOT / "outputs" / "hhs_care_30_day_forecast.csv",
+        ROOT / "hhs_care_30_day_forecast.csv"
+    ]
 )
 
 
@@ -179,13 +172,11 @@ FORECAST_PATH = find_file(
 def load_data(data_path, forecast_path):
 
     if data_path is None:
-
         raise FileNotFoundError(
             "processed_uac_daily.csv was not found."
         )
 
     if forecast_path is None:
-
         raise FileNotFoundError(
             "hhs_care_30_day_forecast.csv was not found."
         )
@@ -215,67 +206,31 @@ def load_data(data_path, forecast_path):
     return df, forecast
 
 
-# ============================================================
-# FILE ERROR HANDLING
-# ============================================================
-
 try:
 
     df, forecast = load_data(
-        DATA_PATH,
-        FORECAST_PATH
+        str(DATA_PATH) if DATA_PATH else None,
+        str(FORECAST_PATH) if FORECAST_PATH else None
     )
 
-except Exception as e:
+except Exception as error:
 
     st.error(
-        "Unable to load the project data files."
+        "The application could not load the required data files."
     )
 
-    st.write(
-        f"Error: {e}"
+    st.code(
+        str(error)
     )
 
-    st.info("""
-Make sure these files are uploaded to the same folder
-as app.py:
+    st.info(
+        """
+        Make sure these files exist in the GitHub repository:
 
-- processed_uac_daily.csv
-- hhs_care_30_day_forecast.csv
-""")
+        processed_uac_daily.csv
 
-    st.stop()
-
-
-# ============================================================
-# REQUIRED COLUMN VALIDATION
-# ============================================================
-
-required_columns = [
-    "Date",
-    "CBP_Custody",
-    "HHS_Care",
-    "CBP_Transferred",
-    "HHS_Discharged"
-]
-
-
-missing_columns = [
-    column
-    for column in required_columns
-    if column not in df.columns
-]
-
-
-if missing_columns:
-
-    st.error(
-        "The dataset is missing required columns."
-    )
-
-    st.write(
-        "Missing columns:",
-        missing_columns
+        hhs_care_30_day_forecast.csv
+        """
     )
 
     st.stop()
@@ -439,17 +394,9 @@ with st.sidebar:
         "Filters"
     )
 
-    min_date = (
-        df["Date"]
-        .min()
-        .date()
-    )
+    min_date = df["Date"].min().date()
 
-    max_date = (
-        df["Date"]
-        .max()
-        .date()
-    )
+    max_date = df["Date"].max().date()
 
     date_range = st.date_input(
         "Analysis Period",
@@ -484,14 +431,19 @@ with st.sidebar:
 # FILTER DATA
 # ============================================================
 
-if len(date_range) == 2:
+if isinstance(
+    date_range,
+    (tuple, list)
+) and len(date_range) == 2:
 
     start_date = date_range[0]
+
     end_date = date_range[1]
 
 else:
 
     start_date = min_date
+
     end_date = max_date
 
 
@@ -529,8 +481,7 @@ def aggregate_data(
 ):
 
     numeric_columns = (
-        data
-        .select_dtypes(
+        data.select_dtypes(
             include=np.number
         )
         .columns
@@ -580,6 +531,7 @@ display_df = aggregate_data(
 
 latest = filtered_df.iloc[-1]
 
+
 peak_row = filtered_df.loc[
     filtered_df[
         "Total_System_Load"
@@ -601,11 +553,6 @@ discharge_offset = (
 )
 
 
-if pd.isna(discharge_offset):
-
-    discharge_offset = 0
-
-
 latest_growth = (
     latest[
         "Care_Load_Growth_Rate"
@@ -613,7 +560,9 @@ latest_growth = (
 )
 
 
-if pd.isna(latest_growth):
+if pd.isna(
+    latest_growth
+):
 
     latest_growth = 0
 
@@ -625,7 +574,9 @@ latest_volatility = (
 )
 
 
-if pd.isna(latest_volatility):
+if pd.isna(
+    latest_volatility
+):
 
     latest_volatility = 0
 
@@ -637,7 +588,9 @@ latest_backlog_rate = (
 )
 
 
-if pd.isna(latest_backlog_rate):
+if pd.isna(
+    latest_backlog_rate
+):
 
     latest_backlog_rate = 0
 
@@ -646,37 +599,29 @@ if pd.isna(latest_backlog_rate):
 # PRESSURE SCORE
 # ============================================================
 
-max_system_load = (
-    df[
-        "Total_System_Load"
-    ].max()
-)
-
-
-if max_system_load > 0:
-
-    load_score = min(
-        (
-            latest[
-                "Total_System_Load"
-            ]
-            /
-            max_system_load
-        )
-        * 100,
-        100
+load_score = min(
+    (
+        latest[
+            "Total_System_Load"
+        ]
+        /
+        df[
+            "Total_System_Load"
+        ].max()
     )
-
-else:
-
-    load_score = 0
+    *
+    100,
+    100
+)
 
 
 max_positive_net_intake = (
     df[
         "Net_Daily_Intake"
     ]
-    .clip(lower=0)
+    .clip(
+        lower=0
+    )
     .max()
 )
 
@@ -694,7 +639,8 @@ if max_positive_net_intake > 0:
             /
             max_positive_net_intake
         )
-        * 100,
+        *
+        100,
         100
     )
 
@@ -711,7 +657,9 @@ max_volatility = (
 
 
 if (
-    pd.notna(max_volatility)
+    pd.notna(
+        max_volatility
+    )
     and
     max_volatility > 0
 ):
@@ -722,7 +670,8 @@ if (
             /
             max_volatility
         )
-        * 100,
+        *
+        100,
         100
     )
 
@@ -777,17 +726,22 @@ def calculate_pressure_scores(
         "Total_System_Load"
     ].max()
 
+
     max_net = (
         result[
             "Net_Daily_Intake"
         ]
-        .clip(lower=0)
+        .clip(
+            lower=0
+        )
         .max()
     )
+
 
     max_vol = result[
         "Care_Load_Volatility_Index"
     ].max()
+
 
     if max_load > 0:
 
@@ -811,7 +765,9 @@ def calculate_pressure_scores(
 
 
     if (
-        pd.notna(max_net)
+        pd.notna(
+            max_net
+        )
         and
         max_net > 0
     ):
@@ -822,7 +778,9 @@ def calculate_pressure_scores(
             result[
                 "Net_Daily_Intake"
             ]
-            .clip(lower=0)
+            .clip(
+                lower=0
+            )
             /
             max_net
             *
@@ -837,7 +795,9 @@ def calculate_pressure_scores(
 
 
     if (
-        pd.notna(max_vol)
+        pd.notna(
+            max_vol
+        )
         and
         max_vol > 0
     ):
@@ -848,7 +808,9 @@ def calculate_pressure_scores(
             result[
                 "Care_Load_Volatility_Index"
             ]
-            .fillna(0)
+            .fillna(
+                0
+            )
             /
             max_vol
             *
@@ -878,6 +840,7 @@ def calculate_pressure_scores(
         ] * 0.20
     )
 
+
     return result
 
 
@@ -892,7 +855,8 @@ strain_df[
     strain_df[
         "Pressure_Score"
     ]
-    >= 65
+    >=
+    65
 )
 
 
@@ -933,7 +897,9 @@ for _, group in strain_df.groupby(
                     ].max(),
 
                 "Duration (Days)":
-                    len(group),
+                    len(
+                        group
+                    ),
 
                 "Peak Pressure":
                     round(
@@ -960,15 +926,14 @@ def section_header(
     subtitle
 ):
 
-    html = f"""
-    <div class="section-title">
-        {title}
-    </div>
-
-    <div class="section-subtitle">
-        {subtitle}
-    </div>
-    """
+    html = (
+        '<div class="section-title">'
+        + str(title)
+        + '</div>'
+        '<div class="section-subtitle">'
+        + str(subtitle)
+        + '</div>'
+    )
 
     st.markdown(
         html,
@@ -982,23 +947,23 @@ def metric_card(
     description
 ):
 
-    html = f"""
-    <div class="metric-card">
+    # Important:
+    # The HTML is kept as one continuous string so Streamlit
+    # renders the tags instead of displaying them as text.
 
-        <div class="metric-label">
-            {title}
-        </div>
-
-        <div class="metric-value">
-            {value}
-        </div>
-
-        <div class="metric-description">
-            {description}
-        </div>
-
-    </div>
-    """
+    html = (
+        '<div class="metric-card">'
+        '<div class="metric-label">'
+        + str(title)
+        + '</div>'
+        '<div class="metric-value">'
+        + str(value)
+        + '</div>'
+        '<div class="metric-description">'
+        + str(description)
+        + '</div>'
+        '</div>'
+    )
 
     st.markdown(
         html,
@@ -1122,8 +1087,7 @@ if page == "🏠 Executive Overview":
                 value=pressure_score,
 
                 number={
-                    "suffix":
-                        " / 100"
+                    "suffix": " / 100"
                 },
 
                 title={
@@ -1133,38 +1097,25 @@ if page == "🏠 Executive Overview":
 
                 gauge={
                     "axis": {
-                        "range":
-                            [0, 100]
+                        "range": [0, 100]
                     },
 
                     "bar": {
-                        "color":
-                            "#1f77b4"
+                        "color": "#1f77b4"
                     },
 
                     "steps": [
                         {
-                            "range":
-                                [0, 35],
-
-                            "color":
-                                "#d9f0d3"
+                            "range": [0, 35],
+                            "color": "#d9f0d3"
                         },
-
                         {
-                            "range":
-                                [35, 65],
-
-                            "color":
-                                "#fff2cc"
+                            "range": [35, 65],
+                            "color": "#fff2cc"
                         },
-
                         {
-                            "range":
-                                [65, 100],
-
-                            "color":
-                                "#f4cccc"
+                            "range": [65, 100],
+                            "color": "#f4cccc"
                         }
                     ]
                 }
@@ -1174,7 +1125,6 @@ if page == "🏠 Executive Overview":
 
         fig.update_layout(
             height=330,
-
             margin=dict(
                 l=20,
                 r=20,
@@ -1192,26 +1142,23 @@ if page == "🏠 Executive Overview":
 
     with right:
 
-        assessment_html = f"""
-        <div class="insight-card">
-
-        <b>Current System Assessment</b>
-
-        <br><br>
-
-        The current composite pressure score is
-        <b>{pressure_score}/100</b>,
-        classified as
-        <b>{pressure_status}</b>.
-
-        <br><br>
-
-        The indicator combines active care-system load,
-        positive intake pressure and recent volatility
-        to provide an operational early-warning signal.
-
-        </div>
-        """
+        assessment_html = (
+            '<div class="insight-card">'
+            '<b>Current System Assessment</b>'
+            '<br><br>'
+            'The current composite pressure score is '
+            '<b>'
+            + str(pressure_score)
+            + '/100</b>, classified as '
+            '<b>'
+            + str(pressure_status)
+            + '</b>.'
+            '<br><br>'
+            'The indicator combines active care-system load, '
+            'positive intake pressure and recent volatility '
+            'to provide an operational early-warning signal.'
+            '</div>'
+        )
 
 
         st.markdown(
@@ -1223,9 +1170,8 @@ if page == "🏠 Executive Overview":
         if average_net_intake > 0:
 
             insight = (
-                "⚠️ Average inflow pressure exceeds "
-                "the discharge response during the "
-                "selected period."
+                "⚠️ Average inflow pressure exceeds the "
+                "discharge response during the selected period."
             )
 
         else:
@@ -1236,17 +1182,13 @@ if page == "🏠 Executive Overview":
             )
 
 
-        insight_html = f"""
-        <div class="insight-card">
-
-        <b>Automated Insight</b>
-
-        <br><br>
-
-        {insight}
-
-        </div>
-        """
+        insight_html = (
+            '<div class="insight-card">'
+            '<b>Automated Insight</b>'
+            '<br><br>'
+            + insight
+            + '</div>'
+        )
 
 
         st.markdown(
@@ -1262,7 +1204,6 @@ if page == "🏠 Executive Overview":
 
 
     metric_options = {
-
         "Total System Load":
             "Total_System_Load",
 
@@ -1282,11 +1223,9 @@ if page == "🏠 Executive Overview":
 
     selected_metric_names = st.multiselect(
         "Select Metrics",
-
         options=list(
             metric_options.keys()
         ),
-
         default=[
             "Total System Load",
             "7-Day Average",
@@ -1343,7 +1282,9 @@ if page == "🏠 Executive Overview":
     )
 
 
-    col1, col2 = st.columns(2)
+    col1, col2 = st.columns(
+        2
+    )
 
 
     with col1:
@@ -1410,7 +1351,9 @@ if page == "🏠 Executive Overview":
     )
 
 
-    insight1, insight2, insight3 = st.columns(3)
+    insight1, insight2, insight3 = st.columns(
+        3
+    )
 
 
     with insight1:
@@ -1444,15 +1387,15 @@ This occurred on
         if trend_difference > 0:
 
             trend_message = (
-                "Short-term pressure is increasing "
-                "relative to the longer-term trend."
+                "Short-term pressure is increasing relative "
+                "to the longer-term trend."
             )
 
         else:
 
             trend_message = (
-                "Short-term load is below or near "
-                "the longer-term trend."
+                "Short-term load is below or near the "
+                "longer-term trend."
             )
 
 
@@ -1470,15 +1413,15 @@ This occurred on
         if discharge_offset >= 100:
 
             discharge_message = (
-                "Discharges are generally offsetting "
-                "or exceeding transfer pressure."
+                "Discharges are generally offsetting or "
+                "exceeding transfer pressure."
             )
 
         else:
 
             discharge_message = (
-                "Discharge activity is not fully "
-                "offsetting transfer pressure."
+                "Discharge activity is not fully offsetting "
+                "transfer pressure."
             )
 
 
@@ -1601,8 +1544,9 @@ elif page == "📈 System Capacity":
                 "Total_System_Load",
                 ascending=False
             )
-            .head(10),
-
+            .head(
+                10
+            ),
             use_container_width=True
         )
 
@@ -1726,9 +1670,8 @@ elif page == "🔄 Flow & Backlog":
     if strain_periods_df.empty:
 
         st.success(
-            "No prolonged high-pressure periods "
-            "were detected in the selected "
-            "analysis period."
+            "No prolonged high-pressure periods were detected "
+            "in the selected analysis period."
         )
 
     else:
@@ -1786,19 +1729,16 @@ elif page == "🔮 Forecast & Risk":
     )
 
 
-    observed = (
-        df[
-            [
-                "Date",
-                "HHS_Care"
-            ]
+    observed = df[
+        [
+            "Date",
+            "HHS_Care"
         ]
-        .rename(
-            columns={
-                "HHS_Care":
-                    "Observed HHS Care"
-            }
-        )
+    ].rename(
+        columns={
+            "HHS_Care":
+                "Observed HHS Care"
+        }
     )
 
 
@@ -1807,7 +1747,8 @@ elif page == "🔮 Forecast & Risk":
 
     if (
         "Forecast_HHS_Care"
-        in forecast_data.columns
+        in
+        forecast_data.columns
     ):
 
         forecast_data = (
@@ -1822,7 +1763,8 @@ elif page == "🔮 Forecast & Risk":
 
     elif (
         "Forecast"
-        in forecast_data.columns
+        in
+        forecast_data.columns
     ):
 
         forecast_data = (
@@ -1862,7 +1804,6 @@ elif page == "🔮 Forecast & Risk":
             ],
 
             mode="lines",
-
             name="Observed HHS Care"
         )
     )
@@ -1870,7 +1811,8 @@ elif page == "🔮 Forecast & Risk":
 
     if (
         "Forecast HHS Care"
-        in combined.columns
+        in
+        combined.columns
     ):
 
         fig.add_trace(
@@ -1884,7 +1826,6 @@ elif page == "🔮 Forecast & Risk":
                 ],
 
                 mode="lines",
-
                 name="30-Day Forecast",
 
                 line=dict(
@@ -1908,17 +1849,17 @@ elif page == "🔮 Forecast & Risk":
     )
 
 
-    forecast_change = None
+    forecast_change = 0
 
 
     if (
         "Forecast HHS Care"
-        in forecast_data.columns
+        in
+        forecast_data.columns
     ):
 
         forecast_values = (
-            forecast_data
-            .dropna(
+            forecast_data.dropna(
                 subset=[
                     "Forecast HHS Care"
                 ]
@@ -1931,6 +1872,7 @@ elif page == "🔮 Forecast & Risk":
             forecast_start = (
                 forecast_values.iloc[0]
             )
+
 
             forecast_end = (
                 forecast_values.iloc[-1]
@@ -1949,7 +1891,9 @@ elif page == "🔮 Forecast & Risk":
 
 
             col1, col2, col3 = (
-                st.columns(3)
+                st.columns(
+                    3
+                )
             )
 
 
@@ -1983,22 +1927,26 @@ elif page == "🔮 Forecast & Risk":
     )
 
 
-    if forecast_change is not None:
+    if (
+        "Forecast HHS Care"
+        in
+        forecast_data.columns
+    ):
 
         if forecast_change > 0:
 
             st.warning(
                 f"""
 Projected HHS care demand is expected to increase by
-approximately **{forecast_change:,.0f} children**
-across the forecast horizon.
+approximately **{forecast_change:,.0f} children** across
+the forecast horizon.
 
 Operational planners should monitor shelter capacity,
 staffing and sponsor-placement throughput.
 """
             )
 
-        elif forecast_change < 0:
+        else:
 
             st.success(
                 f"""
@@ -2007,21 +1955,6 @@ approximately **{abs(forecast_change):,.0f} children**
 across the forecast horizon.
 """
             )
-
-        else:
-
-            st.info(
-                """
-Projected HHS care demand is expected to remain
-relatively stable across the forecast horizon.
-"""
-            )
-
-    else:
-
-        st.warning(
-            "No recognized forecast column was found."
-        )
 
 
 # ============================================================
@@ -2083,20 +2016,22 @@ elif page == "🔎 Data Quality":
     transfer_flags = (
         filtered_df[
             "Flag_Transfer_GT_CBP_Custody"
-        ]
-        .sum()
+        ].sum()
     )
 
 
     discharge_flags = (
         filtered_df[
             "Flag_Discharge_GT_HHS_Care"
-        ]
-        .sum()
+        ].sum()
     )
 
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = (
+        st.columns(
+            3
+        )
+    )
 
 
     with col1:
@@ -2123,7 +2058,11 @@ elif page == "🔎 Data Quality":
         )
 
 
-    col4, col5, col6 = st.columns(3)
+    col4, col5, col6 = (
+        st.columns(
+            3
+        )
+    )
 
 
     with col4:
@@ -2162,14 +2101,15 @@ elif page == "🔎 Data Quality":
 
 
     if (
-        len(missing_dates) == 0
+        len(
+            missing_dates
+        ) == 0
         and
         duplicate_dates == 0
     ):
 
         st.success(
-            "The reporting timeline contains no "
-            "missing or duplicate dates."
+            "The reporting timeline contains no missing or duplicate dates."
         )
 
     else:
@@ -2180,7 +2120,9 @@ elif page == "🔎 Data Quality":
         )
 
 
-    if len(missing_dates) > 0:
+    if len(
+        missing_dates
+    ) > 0:
 
         missing_dates_df = pd.DataFrame(
             {
@@ -2236,7 +2178,6 @@ elif page == "🔎 Data Quality":
                     "Flag_Discharge_GT_HHS_Care"
                 ]
             ],
-
             use_container_width=True
         )
 
@@ -2255,8 +2196,7 @@ elif page == "🔎 Data Quality":
 
 
     csv = (
-        filtered_df
-        .to_csv(
+        filtered_df.to_csv(
             index=False
         )
         .encode(
@@ -2277,21 +2217,17 @@ elif page == "🔎 Data Quality":
 # FOOTER
 # ============================================================
 
-footer_html = """
-<div class="footer-box">
-
-<b>UAC Care Intelligence Platform</b>
-
-<br><br>
-
-Healthcare Capacity Analytics •
-Flow Monitoring •
-Backlog Analysis •
-Forecasting •
-Decision Support
-
-</div>
-"""
+footer_html = (
+    '<div class="footer-box">'
+    '<b>UAC Care Intelligence Platform</b>'
+    '<br><br>'
+    'Healthcare Capacity Analytics • '
+    'Flow Monitoring • '
+    'Backlog Analysis • '
+    'Forecasting • '
+    'Decision Support'
+    '</div>'
+)
 
 
 st.markdown(
