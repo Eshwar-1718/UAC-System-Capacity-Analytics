@@ -1,0 +1,8 @@
+Metric,Value
+Raw rows,1170
+Completely blank rows removed,450
+Valid observations,720
+Duplicate dates,0
+Missing calendar dates,355
+Transfer > reported CBP custody flags,86
+Discharge > HHS care flags,0
