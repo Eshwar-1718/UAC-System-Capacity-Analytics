@@ -1,85 +1,163 @@
-# System Capacity & Care Load Analytics for Unaccompanied Children
 
-## Project Overview
+# UAC System Capacity Analytics
 
-This project analyzes the operational capacity and care load of the Unaccompanied Alien Children (UAC) care system.
+An interactive Python analytics project for monitoring care-system load, analysing daily inflow and outflow, identifying periods of operational pressure, and forecasting short-term HHS care demand.
 
-The project uses daily operational data to monitor the movement of children through the care pipeline, including:
+## Overview
 
-- CBP custody
-- Transfers into HHS care
-- Active HHS care load
-- Discharges and sponsor placements
-- Total system capacity
-- Intake pressure and backlog accumulation
-- High-pressure operational periods
-- Short-term HHS care forecasting
+This project analyses daily operational data from the Unaccompanied Children (UAC) care pipeline involving Customs and Border Protection (CBP) and Health and Human Services (HHS).
 
-An interactive Streamlit dashboard was developed to transform daily operational data into decision-support insights for healthcare and capacity planning.
-
----
+The project transforms daily records into analytical metrics, trend indicators, data-quality checks, and a 30-day HHS care forecast.
 
 ## Problem Statement
 
-The UAC care system functions as a dynamic care pipeline. Sudden increases in child arrivals can create pressure on:
+Changes in daily arrivals, transfers, and discharges can affect the number of children in care. Analysing these changes together can help identify sustained increases in care load and potential operational pressure.
 
-- Shelter capacity
-- Healthcare staffing
-- Medical and psychological support
-- Sponsor placement operations
+This project provides a data-driven framework to explore those patterns and support situational awareness.
 
-Without a centralized analytical framework, capacity management can become reactive.
+## Key Features
 
-This project provides an analytical framework to continuously assess:
+- Interactive Streamlit dashboard
+- Daily and cumulative care-load analysis
+- Intake and discharge trend monitoring
+- Net daily intake and discharge offset analysis
+- Rolling averages and care-load volatility
+- Backlog pressure indicators
+- Data-quality validation checks
+- 30-day HHS care forecasting
+- Forecast evaluation using MAE and RMSE
+- CSV-based analytical outputs
 
-- Total care system load
-- Balance between inflow and outflow
-- Capacity stress and relief periods
-- Backlog risk
-- Sustainability of care delivery
-- Near-term operational demand
+## Technology Stack
 
----
-
-## Project Objectives
-
-### Primary Objectives
-
-- Quantify daily and cumulative care load across CBP and HHS
-- Identify periods of capacity strain and relief
-- Analyze the balance between intake, transfers, and discharges
-
-### Secondary Objectives
-
-- Support healthcare staffing and shelter planning
-- Improve situational awareness for decision-makers
-- Enable data-driven humanitarian response evaluation
-- Forecast near-term HHS care demand
-
----
+- **Language:** Python
+- **Data analysis:** Pandas, NumPy
+- **Dashboard:** Streamlit
+- **Forecasting:** Exponential smoothing
+- **Data visualisation:** See `app.py` and `requirements.txt` for the libraries used
+- **Version control:** Git and GitHub
 
 ## Dataset
 
-The dataset contains daily operational records from 2023 to 2025.
+The analysis covers 720 valid daily observations from January 12, 2023, through December 21, 2025.
 
-### Key Variables
+The data includes measures related to:
 
-| Column | Description |
+- Children in CBP custody
+- Transfers from CBP custody into HHS care
+- Children in HHS care
+- HHS discharges
+
+Data preparation includes date parsing, numeric conversion, chronological ordering, and validation checks.
+
+Missing reporting dates are treated as gaps, not automatically as zero-demand days.
+
+## Analytical Metrics
+
+| Metric | Purpose |
 |---|---|
-| Date | Reporting date |
-| Children apprehended and placed in CBP custody | Daily intake volume |
-| Children in CBP custody | Active CBP care load |
-| Children transferred out of CBP custody | Flow into HHS care |
-| Children in HHS Care | Active HHS care load |
-| Children discharged from HHS Care | Successful sponsor placements |
+| Total System Load | Combined active care load across CBP and HHS |
+| Net Daily Intake | HHS-directed transfers minus HHS discharges |
+| Discharge Offset Ratio | Compares discharges with incoming transfers |
+| Care-Load Volatility | Measures variation in recent system load |
+| Backlog Accumulation | Tracks cumulative positive net-intake periods |
+| Moving Averages | Helps distinguish sustained trends from daily fluctuations |
 
-The data is cleaned and transformed into a structured daily analytical dataset.
+## Selected Findings
 
----
+Based on the current analysis report:
 
-## Derived Healthcare Capacity Metrics
+- Latest observed combined system load: **2,502**
+- Highest observed combined system load: **11,762** on December 20, 2023
+- Average net daily intake: **-44.74** children per day
+- Median discharge offset ratio: **127.80%**
+- 30-day forecast back-test MAE: **75.36**
+- 30-day forecast back-test RMSE: **90.01**
 
-### Total System Load
+These figures describe the analysed dataset and should not be interpreted as live operational statistics.
 
-```text
-CBP Custody + HHS Care
+## Project Files
+
+| File | Description |
+|---|---|
+| `app.py` | Streamlit dashboard and analytical logic |
+| `processed_uac_daily.csv` | Processed daily dataset |
+| `hhs_care_30_day_forecast.csv` | Forecast output |
+| `data_quality_summary.csv` | Data-quality summary |
+| `REPORT.md` | Detailed analytical report |
+| `EXECUTIVE_SUMMARY.md` | Summary of findings and recommendations |
+| `requirements.txt` | Python dependencies |
+
+## Installation and Setup
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/Eshwar-1718/UAC-System-Capacity-Analytics.git
+cd UAC-System-Capacity-Analytics
+```
+
+### 2. Create a virtual environment
+
+Windows:
+
+```bash
+py -m venv venv
+venv\Scripts\activate
+```
+
+macOS/Linux:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### 3. Install dependencies
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+### 4. Run the dashboard
+
+```bash
+streamlit run app.py
+```
+
+Open the local URL printed in your terminal.
+
+## Forecasting Approach
+
+The project uses a trend-based exponential smoothing model as an interpretable forecasting baseline.
+
+The final 30 observed days are held out for back-testing. The model is evaluated using:
+
+- **MAE:** Mean Absolute Error
+- **RMSE:** Root Mean Squared Error
+
+The reported back-test MAE is 75.36 and RMSE is 90.01. These are historical evaluation results, not a guarantee of future accuracy.
+
+## Limitations
+
+- The dataset contains aggregate counts rather than individual-level records.
+- Direct bed-capacity, staffing-capacity, and facility-level denominators are not available.
+- Reporting gaps and differences in operational cut-off times can affect interpretation.
+- Forecasts are estimates and should be validated against appropriate baselines and newer data.
+
+Therefore, the indicators represent relative operational pressure rather than measured occupancy or confirmed overcrowding.
+
+## Future Improvements
+
+- Add automated data validation and reproducible analysis scripts.
+- Compare forecasting models using the same time-based validation period.
+- Add automated tests for data transformations and metric calculations.
+- Improve dashboard usability and add clear chart explanations.
+- Deploy the dashboard so recruiters can explore it online.
+
+## Author
+
+**Eshwar**
+
+- GitHub: [Eshwar-1718](https://github.com/Eshwar-1718)
+
